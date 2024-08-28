@@ -1,0 +1,33 @@
+hashing password {
+    algo bcrypt(15)
+}
+
+schema global {
+    id number primary increment
+    created_at datetime
+    updated_at datetime
+}
+
+model User {
+    &global
+    username string @default("hi")
+    password string @sensitive @hash("password")
+}
+
+// cmd
+
+query latestUser {
+    get User.orderByDesc(User.created_at) // hi
+}
+
+query allUser {
+    get[] User
+}
+
+query getUserNameByID(id number) {
+    get{User.username} User.where(ID == id).limit(1)
+}
+
+query randomUser {
+    get User.random()
+}
