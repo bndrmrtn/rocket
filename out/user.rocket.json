@@ -1,0 +1,178 @@
+{
+  "models": {
+    "Image": {
+      "User": {
+        "type": "model",
+        "relation": {
+          "model": "User",
+          "field": "ID",
+          "type": "hasOne"
+        },
+        "ignore": true
+      },
+      "created_at": {
+        "type": "datetime",
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "now()"
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "id": {
+        "type": "number",
+        "attributes": [
+          "primary",
+          "increment"
+        ],
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "\"",
+              "\"hi\""
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "updated_at": {
+        "type": "datetime",
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "now()"
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      }
+    },
+    "User": {
+      "created_at": {
+        "type": "datetime",
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "now()"
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "id": {
+        "type": "number",
+        "attributes": [
+          "primary",
+          "increment"
+        ],
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "\"",
+              "\"hi\""
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "password": {
+        "type": "string",
+        "annotations": [
+          {
+            "annotation": "sensitive"
+          },
+          {
+            "annotation": "hash",
+            "arguments": [
+              "\"",
+              "\"password\""
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "updated_at": {
+        "type": "datetime",
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "now()"
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      },
+      "username": {
+        "type": "string",
+        "annotations": [
+          {
+            "annotation": "default",
+            "arguments": [
+              "\"",
+              "\"hi\""
+            ]
+          }
+        ],
+        "relation": {
+          "model": "",
+          "field": "",
+          "type": ""
+        },
+        "ignore": false
+      }
+    }
+  },
+  "hashing": [
+    {
+      "Name": "password",
+      "Provider": "bcrypt",
+      "Arguments": [
+        "15"
+      ]
+    }
+  ],
+  "queries": []
+}

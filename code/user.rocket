@@ -3,15 +3,20 @@ hashing password {
 }
 
 schema global {
-    id number primary increment
-    created_at datetime
-    updated_at datetime
+    id number primary increment @default("hi")
+    created_at datetime @default(now())
+    updated_at datetime @default(now())
 }
 
 model User {
     &global
     username string @default("hi")
     password string @sensitive @hash("password")
+}
+
+model Image {
+    &global
+    User $hasOne(User, ID)
 }
 
 // cmd
@@ -24,8 +29,8 @@ query allUser {
     get[] User
 }
 
-query getUserNameByID(id number) {
-    get{User.username} User.where(ID == id).limit(1)
+query getUserNameByID(_id number) { // params should always start with an underscore
+    get{User.username} User.where(ID == _id).limit(1)
 }
 
 query randomUser {

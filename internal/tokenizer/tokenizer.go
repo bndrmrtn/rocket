@@ -135,19 +135,21 @@ func (l *Tokenizer) Tokenize() error {
 				}
 
 				text := string(char)
-				buffer += text
-				l.shift()
-
-				if text == "{" {
-					braceCount++
-				}
 
 				if text == "}" {
 					if braceCount > 0 {
 						braceCount--
 					} else {
+						l.currentPos++
 						break
 					}
+				}
+
+				buffer += text
+				l.shift()
+
+				if text == "{" {
+					braceCount++
 				}
 			}
 
@@ -160,7 +162,7 @@ func (l *Tokenizer) Tokenize() error {
 		return NewErrorWithPosition("Invalid character", Token{
 			Line:     l.currentLine,
 			FileName: l.fileName,
-			Value:    l.buf,
+			Value:    fmt.Sprintf("[%v]", string(l.src[l.currentPos])) + l.buf,
 		})
 	}
 

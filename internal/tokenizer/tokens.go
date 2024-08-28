@@ -14,10 +14,12 @@ const (
 	QueryType   TokenType = "query"
 	TypeValue   TokenType = "#typeValue#"
 
+	Algorithm TokenType = "algo"
+
 	LinkingSymbol    TokenType = "&"
 	AnnotationSymbol TokenType = "@"
 	CommentSymbol    TokenType = "//"
-	ProviderSymbol   TokenType = "provider"
+	RelationSymbol   TokenType = "$"
 
 	DataTypeString   TokenType = "string"
 	DataTypeJSON     TokenType = "json"
@@ -41,4 +43,12 @@ type Token struct {
 	TokenPos  int
 	FileName  string
 	Line      int
+}
+
+type BuildToken struct {
+	Type  TokenType
+	Key   string
+	Value string
+	Line  int
+	File  string
 }
