@@ -54,16 +54,20 @@ func parseFunctionCallArgs(args string) []string {
 		}
 
 		if char == '"' {
+			pos++
 			var buf string
 			for pos+1 < len(args) {
-				buf += string(args[pos])
 				if args[pos] == '"' && args[pos-1] != '\\' {
 					break
 				}
+				buf += string(args[pos])
 				pos++
 			}
 
-			generated = append(generated, buf)
+			if buf != "" {
+				generated = append(generated, buf)
+			}
+			continue
 		}
 
 		if char == ',' {

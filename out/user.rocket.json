@@ -6,7 +6,7 @@
         "relation": {
           "model": "User",
           "field": "ID",
-          "type": "hasOne"
+          "type": "belongsTo"
         },
         "ignore": true
       },
@@ -20,11 +20,6 @@
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "id": {
@@ -37,16 +32,10 @@
           {
             "annotation": "default",
             "arguments": [
-              "\"",
-              "\"hi\""
+              "hi"
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "updated_at": {
@@ -59,15 +48,19 @@
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       }
     },
     "User": {
+      "Images": {
+        "type": "model",
+        "relation": {
+          "model": "Image",
+          "field": "#",
+          "type": "hasMany"
+        },
+        "ignore": true
+      },
       "created_at": {
         "type": "datetime",
         "annotations": [
@@ -78,11 +71,6 @@
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "id": {
@@ -95,16 +83,10 @@
           {
             "annotation": "default",
             "arguments": [
-              "\"",
-              "\"hi\""
+              "hi"
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "password": {
@@ -116,16 +98,10 @@
           {
             "annotation": "hash",
             "arguments": [
-              "\"",
-              "\"password\""
+              "password"
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "updated_at": {
@@ -138,11 +114,6 @@
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       },
       "username": {
@@ -151,28 +122,91 @@
           {
             "annotation": "default",
             "arguments": [
-              "\"",
-              "\"hi\""
+              "hi"
             ]
           }
         ],
-        "relation": {
-          "model": "",
-          "field": "",
-          "type": ""
-        },
         "ignore": false
       }
     }
   },
   "hashing": [
     {
-      "Name": "password",
-      "Provider": "bcrypt",
-      "Arguments": [
+      "name": "password",
+      "provider": "bcrypt",
+      "arguments": [
         "15"
       ]
     }
   ],
-  "queries": []
+  "queries": [
+    {
+      "name": "latestUser",
+      "tokens": [
+        "get",
+        "User",
+        ".",
+        "orderByDesc",
+        "(",
+        "User",
+        ".",
+        "created_at",
+        ")"
+      ]
+    },
+    {
+      "name": "allUser",
+      "tokens": [
+        "get",
+        "User"
+      ]
+    },
+    {
+      "name": "getUserNameByID",
+      "arguments": [
+        {
+          "name": "_id",
+          "type": "number"
+        }
+      ],
+      "tokens": [
+        "get",
+        "{",
+        "User",
+        ".",
+        "username",
+        "}",
+        "User",
+        ".",
+        "where",
+        "(",
+        "ID",
+        "=",
+        "=",
+        "_id",
+        ")",
+        ".",
+        "limit",
+        "(",
+        "1",
+        ")"
+      ]
+    },
+    {
+      "name": "randomUser",
+      "tokens": [
+        "get",
+        "User",
+        ".",
+        "random",
+        "(",
+        ")",
+        ".",
+        "orderByDesc",
+        "(",
+        "ID",
+        ")"
+      ]
+    }
+  ]
 }

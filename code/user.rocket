@@ -1,3 +1,4 @@
+// comments currently only supported outside blocks
 hashing password {
     algo bcrypt(15)
 }
@@ -12,27 +13,27 @@ model User {
     &global
     username string @default("hi")
     password string @sensitive @hash("password")
+    Images $hasMany(Image)
 }
 
 model Image {
     &global
-    User $hasOne(User, ID)
+    User $belongsTo(User, ID)
 }
 
-// cmd
-
 query latestUser {
-    get User.orderByDesc(User.created_at) // hi
+    get User.orderByDesc(User.created_at)
 }
 
 query allUser {
     get[] User
 }
 
-query getUserNameByID(_id number) { // params should always start with an underscore
+query getUserNameByID(_id number) {
     get{User.username} User.where(ID == _id).limit(1)
 }
 
 query randomUser {
-    get User.random()
+    get User.random().
+        orderByDesc(ID)
 }

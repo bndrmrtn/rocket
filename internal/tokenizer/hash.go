@@ -3,9 +3,9 @@ package tokenizer
 // Hashing
 
 type Hashing struct {
-	Name      string
-	Provider  string
-	Arguments []string
+	Name      string   `json:"name"`
+	Provider  string   `json:"provider"`
+	Arguments []string `json:"arguments,omitempty"`
 }
 
 func getHashAlgoList() []string {

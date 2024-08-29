@@ -96,6 +96,15 @@ func (l *Tokenizer) Tokenize() error {
 				}
 				l.currentLine++
 				l.shift()
+			} else if l.currentPosOK() && l.src[l.currentPos+1] == '*' {
+				var buf string
+				for !strings.HasSuffix(buf, "*/") {
+					if l.src[l.currentPos] == '\n' {
+						l.currentLine++
+					}
+					buf += l.shift()
+				}
+				l.shift()
 			}
 			continue
 		}
@@ -159,11 +168,11 @@ func (l *Tokenizer) Tokenize() error {
 			continue
 		}
 
-		return NewErrorWithPosition("Invalid character", Token{
+		return NewErrorWithPosition("unexpected token", Token{
 			Line:     l.currentLine,
 			FileName: l.fileName,
 			Value:    fmt.Sprintf("[%v]", string(l.src[l.currentPos])) + l.buf,
-		})
+		}).SetType("syntax error")
 	}
 
 	return nil
@@ -177,12 +186,12 @@ func (l *Tokenizer) isTokenStarted() (bool, *TokenType, error) {
 	for name, tokenType := range typeTokens() {
 		if strings.HasSuffix(l.buf, name) {
 			if l.nextPosOK() && l.src[l.currentPos+1] != ' ' {
-				return false, nil, NewErrorWithPosition("Invalid character", Token{
+				return false, nil, NewErrorWithPosition("space was expected after block keyword, but got \""+string(l.src[l.currentPos+1])+"\"", Token{
 					Value:    name,
 					FileName: l.fileName,
 					TokenPos: l.currentPos,
 					Line:     l.currentLine,
-				})
+				}).SetType("syntax error")
 			}
 			return true, &tokenType, nil
 		}
@@ -190,12 +199,12 @@ func (l *Tokenizer) isTokenStarted() (bool, *TokenType, error) {
 
 	char := rune(l.src[l.currentPos+1])
 	if l.nextPosOK() && unicode.IsSpace(char) {
-		return false, nil, NewErrorWithPosition("Invalid character", Token{
+		return false, nil, NewErrorWithPosition("unexpected block keyword", Token{
 			Value:    l.buf,
 			FileName: l.fileName,
 			TokenPos: l.currentPos,
 			Line:     l.currentLine,
-		})
+		}).SetType("syntax error")
 	}
 	return false, nil, nil
 }

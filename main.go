@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/bndrmrtn/rocket/internal/tokenizer"
 	"log"
 	"os"
@@ -14,7 +15,8 @@ func main() {
 	}
 	err = t.Tokenize()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	tokens := t.GetTokens()
@@ -22,10 +24,12 @@ func main() {
 	typeT := tokenizer.NewType(tokens)
 	err = typeT.Generate()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	data := typeT.Output()
+
 	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		log.Fatal(err)

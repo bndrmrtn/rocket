@@ -41,12 +41,23 @@ func (t *TypeTokenizer) Generate() error {
 		}
 	}
 
+	query := NewQueryTokenizer(t.queries)
+	err := query.Generate()
+	if err != nil {
+		return err
+	}
+
+	t.output.Queries = query.Output()
+
 	return nil
 }
 
 func (t *TypeTokenizer) parseModels(token BuildToken) error {
 	if token.Value == "" {
-		fmt.Println("WARN: empty " + token.Key)
+		WarnWithPos("empty code block", Token{
+			FileName: token.File,
+			Line:     token.Line,
+		})
 		return nil
 	}
 
@@ -133,30 +144,36 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 	modelConfig.Annotations = annotations
 
 	if strings.HasPrefix(Type, "$") {
-		t, args := parseFunctionCall(strings.TrimPrefix(Type, "$"))
-		if !slices.Contains(RelationTypes, t) {
-			return modelConfig, NewErrorWithPosition(fmt.Sprintf("%s is not a valid relation type. Try: %v", t, RelationTypes), Token{
+		rel, args := parseFunctionCall(strings.TrimPrefix(Type, "$"))
+		if !slices.Contains(RelationTypes, rel) {
+			return modelConfig, NewErrorWithPosition(fmt.Sprintf("%s is not a valid relation type. try: %v", t, RelationTypes), Token{
 				Line:     line,
 				FileName: file,
 				Value:    s,
-			})
+			}).SetType("invalid relation")
 		}
 
-		if len(args) == 2 {
-			modelConfig.Type = "model"
-			modelConfig.Relation = ModelRelation{
-				Model: args[0],
-				Field: args[1],
-				Type:  t,
-			}
-			modelConfig.Ignore = true
-		} else {
-			return modelConfig, NewErrorWithPosition(fmt.Sprintf("[%s] %v arguments passed, %v is required at line %v", t, len(args), 2, line), Token{
-				Line:     line,
-				FileName: file,
-				Value:    s,
-			})
+		err := t.checkRelationArgs(rel, args, Token{
+			Line:     line,
+			FileName: file,
+			Value:    s,
+		})
+
+		if err != nil {
+			return modelConfig, err
 		}
+
+		if len(args) == 1 {
+			args = append(args, "#")
+		}
+
+		modelConfig.Type = "model"
+		modelConfig.Relation = &ModelRelation{
+			Model: args[0],
+			Field: args[1],
+			Type:  rel,
+		}
+		modelConfig.Ignore = true
 	} else {
 		modelConfig.Type = Type
 	}
@@ -282,7 +299,10 @@ func (t *TypeTokenizer) createLink(schema Model, line string, i int, token Build
 
 func (t *TypeTokenizer) parseHashing(token BuildToken) error {
 	if token.Value == "" {
-		fmt.Println("WARN: empty", token.Key)
+		WarnWithPos("empty code block", Token{
+			FileName: token.File,
+			Line:     token.Line,
+		})
 		return nil
 	}
 
@@ -313,7 +333,7 @@ func (t *TypeTokenizer) parseHashing(token BuildToken) error {
 
 		algo, args = parseFunctionCall(line)
 		if !slices.Contains(algoList, algo) {
-			return NewErrorWithPosition("Invalid hashing algo", Token{
+			return NewErrorWithPosition("unsupported hashing algorithm", Token{
 				Value:     line,
 				TokenType: token.Type,
 				Line:      token.Line + i + 1,
@@ -345,9 +365,9 @@ func (t *TypeTokenizer) sortTokens() {
 		case SchemaType, ModelType:
 			t.schemas = append(t.schemas, t.createToken(i, token))
 		case HashingType:
-			t.hashing = append(t.schemas, t.createToken(i, token))
+			t.hashing = append(t.hashing, t.createToken(i, token))
 		case QueryType:
-			t.queries = append(t.schemas, t.createToken(i, token))
+			t.queries = append(t.queries, t.createToken(i, token))
 		}
 	}
 }
@@ -366,6 +386,15 @@ func (t *TypeTokenizer) createToken(inx int, token Token) BuildToken {
 		Line:  token.Line,
 		File:  token.FileName,
 	}
+}
+
+func (t *TypeTokenizer) checkRelationArgs(relation string, args []string, token Token) error {
+	if slices.Contains([]string{"belongsTo"}, relation) {
+		if len(args) != 2 {
+			return NewErrorWithPosition(fmt.Sprintf("[%s] %v arguments passed, %v is required", relation, len(args), 2), token)
+		}
+	}
+	return nil
 }
 
 func (t *TypeTokenizer) Output() *Generated {
