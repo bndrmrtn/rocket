@@ -8,11 +8,13 @@ const (
 
 	StringLiteral TokenType = "\""
 
-	SchemaType  TokenType = "schema"
-	ModelType   TokenType = "model"
-	HashingType TokenType = "hashing"
-	QueryType   TokenType = "query"
-	TypeValue   TokenType = "#typeValue#"
+	SchemaType   TokenType = "schema"
+	ModelType    TokenType = "model"
+	EnumType     TokenType = "enum"
+	HashingType  TokenType = "hashing"
+	QueryType    TokenType = "query"
+	SettingsType TokenType = "settings"
+	TypeValue    TokenType = "#typeValue#"
 
 	Algorithm TokenType = "algo"
 
@@ -29,6 +31,7 @@ const (
 
 	PrimaryKeyAttribute    TokenType = "primary"
 	AutoIncrementAttribute TokenType = "increment"
+	NullableAttribute      TokenType = "nullable"
 
 	AnnotationSensitive TokenType = "sensitive"
 	AnnotationHash      TokenType = "hash"
@@ -51,4 +54,14 @@ type BuildToken struct {
 	Value string
 	Line  int
 	File  string
+}
+
+func (b BuildToken) ToToken() Token {
+	return Token{
+		Value:     b.Value,
+		TokenType: b.Type,
+		TokenPos:  b.Line,
+		FileName:  b.File,
+		Line:      b.Line,
+	}
 }

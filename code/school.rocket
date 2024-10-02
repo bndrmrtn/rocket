@@ -1,0 +1,24 @@
+schema main {
+    id number primary increment
+    created_at datetime @default(now())
+    updated_at datetime @default(now())
+}
+
+/**
+ * ATTENTION!
+ * MANY-TO-MANY RELATIONSHIPS
+ * CURRENTLY NOT SUPPORTED
+*/
+
+model Class {
+    &main
+    grade number(2)
+    alphabet string(1)
+    teachers $hasMany(Teacher, id)
+}
+
+model Teacher {
+    &main
+    name string(15)
+    class $hasMany(Class, id)
+}

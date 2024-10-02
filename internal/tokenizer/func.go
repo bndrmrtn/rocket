@@ -2,6 +2,7 @@ package tokenizer
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -72,6 +73,11 @@ func parseFunctionArgs(args string) (map[string]string, error) {
 			if len(data) != 2 {
 				return nil, errors.New("argument must have a name and a type")
 			}
+
+			if !isTypeOK(data[1]) {
+				return nil, errors.New("invalid type: " + data[1])
+			}
+
 			generated[data[0]] = data[1]
 			pos++
 			continue
@@ -79,4 +85,12 @@ func parseFunctionArgs(args string) (map[string]string, error) {
 	}
 
 	return generated, nil
+}
+
+func isTypeOK(t string) bool {
+	if strings.HasPrefix(t, "[]") {
+		t = strings.TrimPrefix(t, "[]")
+	}
+
+	return slices.Contains([]string{"number", "string", "byte", "bool"}, t)
 }

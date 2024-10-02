@@ -39,7 +39,8 @@ func (q *QueryTokenizer) Generate() error {
 }
 
 func (q *QueryTokenizer) tokenizeData(input string) []string {
-	pattern := `[\w]+|[=().{}]|\s+|==|_id`
+	// pattern := `\[\]|\w+|==|[=().{}]|\s+|,|[0-9]+`
+	pattern := `\[\]|\w+|==|\|\||[=().{}]|\s+|,|[0-9]+`
 	re := regexp.MustCompile(pattern)
 	tokens := re.FindAllString(input, -1)
 

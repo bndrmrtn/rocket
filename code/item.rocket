@@ -1,0 +1,15 @@
+// Item: Demo query
+
+model Item {
+    id number primary increment
+    name string @map("item_name")
+    quantity number(4)
+}
+
+query selectAll {
+    []get{Item.id, Item.name} Item.Where(id == 5 || id == 6)
+}
+
+query findByID(_id number) {
+    get Item.Where(id == _id)
+}

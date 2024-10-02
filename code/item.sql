@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS `Item` (
+	`id` INT(32) AUTO_INCREMENT NOT NULL,
+	PRIMARY KEY (`id`),
+	`name` TEXT NOT NULL,
+	`quantity` INT(4) NOT NULL
+);
+

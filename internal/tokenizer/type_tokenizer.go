@@ -1,7 +1,6 @@
 package tokenizer
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -15,6 +14,7 @@ type TypeTokenizer struct {
 	schemas []BuildToken
 	hashing []BuildToken
 	queries []BuildToken
+	enums   []BuildToken
 }
 
 func NewType(tokens []Token) *TypeTokenizer {
@@ -27,6 +27,14 @@ func NewType(tokens []Token) *TypeTokenizer {
 }
 
 func (t *TypeTokenizer) Generate() error {
+	for _, token := range t.enums {
+		err := t.parseEnum(token)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	for _, token := range t.hashing {
 		err := t.parseHashing(token)
 		if err != nil {
@@ -52,6 +60,46 @@ func (t *TypeTokenizer) Generate() error {
 	return nil
 }
 
+func (t *TypeTokenizer) parseEnum(token BuildToken) error {
+	var enum = make(map[string]string)
+
+	data := strings.Split(token.Value, "\n")
+	for _, line := range data {
+		parts := strings.Split(line, "//")
+		if len(parts) > 1 {
+			line = parts[0]
+		}
+
+		parts = strings.Split(line, "=")
+		var (
+			key, value string
+			err        error
+		)
+		if len(parts) == 1 {
+			key = strings.TrimSpace(parts[0])
+			value = strings.TrimSpace(parts[0])
+		} else if len(parts) == 2 {
+			key = strings.TrimSpace(parts[0])
+			value, err = parseValue(parts[1])
+			if err != nil {
+				return NewErrorWithPosition(fmt.Sprintf("invalid value: \"%s\"", value), token.ToToken()).SetType("syntax error")
+			}
+		} else {
+			return NewErrorWithPosition("invalid length of items between \"=\"", token.ToToken()).SetType("syntax error")
+		}
+
+		if key == "" {
+			continue
+		}
+
+		enum[key] = value
+	}
+
+	t.output.Enums[token.Key] = enum
+
+	return nil
+}
+
 func (t *TypeTokenizer) parseModels(token BuildToken) error {
 	if token.Value == "" {
 		WarnWithPos("empty code block", Token{
@@ -61,7 +109,7 @@ func (t *TypeTokenizer) parseModels(token BuildToken) error {
 		return nil
 	}
 
-	schema, err := t.parseModel(token)
+	schema, keys, err := t.parseModel(token)
 
 	if err != nil {
 		return err
@@ -69,26 +117,41 @@ func (t *TypeTokenizer) parseModels(token BuildToken) error {
 
 	if token.Type == ModelType {
 		t.output.Models[token.Key] = schema
+		t.output.ModelKeys[token.Key] = keys
 	}
 
 	return nil
 }
 
-func (t *TypeTokenizer) parseModel(token BuildToken) (Model, error) {
-	var schema Model = map[string]ModelConfig{}
+func (t *TypeTokenizer) parseModel(token BuildToken) (Model, []string, error) {
+	var (
+		schema Model = map[string]ModelConfig{}
+		keys   []string
+	)
 
 	for i, line := range strings.Split(token.Value, "\n") {
+		if strings.Contains(line, "//") {
+			sp := strings.SplitN(line, "//", 2)
+			if len(sp) > 1 {
+				line = sp[0]
+			}
+		}
+
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			continue
 		}
 
 		if strings.HasPrefix(line, string(LinkingSymbol)) {
-			var err error
-			schema, err = t.createLink(schema, line, i, token)
+			var (
+				err error
+				k   []string
+			)
+			schema, k, err = t.createLink(schema, line, i, token)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
+			keys = append(keys, k...)
 			continue
 		}
 
@@ -96,13 +159,14 @@ func (t *TypeTokenizer) parseModel(token BuildToken) (Model, error) {
 		val, err := t.parseModelConfig(strings.TrimSpace(data[1]), token.Line+i+1, token.File)
 
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
+		keys = append(keys, data[0])
 		schema[data[0]] = val
 	}
 
-	return schema, nil
+	return schema, keys, nil
 }
 
 func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (ModelConfig, error) {
@@ -130,7 +194,7 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 			break
 		}
 
-		if unicode.IsLetter(char) || char == '_' || (char == '$' && Type == "") {
+		if unicode.IsLetter(char) || char == '&' || char == '_' || (char == '$' && Type == "") {
 			Type += string(char)
 			pos++
 		}
@@ -146,7 +210,7 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 	if strings.HasPrefix(Type, "$") {
 		rel, args := parseFunctionCall(strings.TrimPrefix(Type, "$"))
 		if !slices.Contains(RelationTypes, rel) {
-			return modelConfig, NewErrorWithPosition(fmt.Sprintf("%s is not a valid relation type. try: %v", t, RelationTypes), Token{
+			return modelConfig, NewErrorWithPosition(fmt.Sprintf("%v is not a valid relation type. try: %v", t, RelationTypes), Token{
 				Line:     line,
 				FileName: file,
 				Value:    s,
@@ -174,6 +238,17 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 			Type:  rel,
 		}
 		modelConfig.Ignore = true
+	} else if strings.HasPrefix(Type, "&") {
+		enumName := strings.TrimPrefix(Type, "&")
+		_, ok := t.output.Enums[enumName]
+		if !ok {
+			return modelConfig, NewErrorWithPosition(fmt.Sprintf("enum \"%s\" not found", enumName), Token{
+				Line:     line,
+				FileName: file,
+				Value:    s,
+			}).SetType("typegetter error")
+		}
+		modelConfig.Type = "enum:" + enumName
 	} else {
 		modelConfig.Type = Type
 	}
@@ -181,7 +256,7 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 	return modelConfig, nil
 }
 
-func (t *TypeTokenizer) getAttrsAndAnnotations(s string, line int, file string) ([]string, []ModelAnnotation) {
+func (t *TypeTokenizer) getAttrsAndAnnotations(s string, _ int, _ string) ([]string, []ModelAnnotation) {
 	var (
 		pos int
 		buf string
@@ -210,6 +285,10 @@ func (t *TypeTokenizer) getAttrsAndAnnotations(s string, line int, file string) 
 			for pos < len(s) {
 				val += string(s[pos])
 				pos++
+
+				if pos >= len(s) {
+					continue
+				}
 
 				if unicode.IsSpace(rune(s[pos])) {
 					break
@@ -255,7 +334,7 @@ func (t *TypeTokenizer) getAttrsAndAnnotations(s string, line int, file string) 
 	return attrs, annotations
 }
 
-func (t *TypeTokenizer) getSchema(link string) (Model, error) {
+func (t *TypeTokenizer) getSchema(link string, bt BuildToken) (Model, []string, error) {
 	var (
 		exists bool
 		token  BuildToken
@@ -269,32 +348,32 @@ func (t *TypeTokenizer) getSchema(link string) (Model, error) {
 	}
 
 	if !exists {
-		return nil, errors.New("Invalid schema \"" + link + "\"")
+		return nil, nil, NewErrorWithPosition(fmt.Sprintf("invalid schema \"%s\"", link), bt.ToToken()).SetType("typegetter error")
 	}
 
 	return t.parseModel(token)
 }
 
-func (t *TypeTokenizer) createLink(schema Model, line string, i int, token BuildToken) (Model, error) {
+func (t *TypeTokenizer) createLink(schema Model, line string, i int, token BuildToken) (Model, []string, error) {
 	if strings.Contains(line, " ") {
-		return nil, NewErrorWithPosition("Attributes cannot be added to a schema linking", Token{
+		return nil, nil, NewErrorWithPosition("attributes cannot be added to a schema linking", Token{
 			Value:     line,
 			TokenType: token.Type,
 			Line:      token.Line + i,
 			FileName:  token.File,
-		})
+		}).SetType("schema error")
 	}
-	data, err := t.getSchema(strings.TrimPrefix(line, string(LinkingSymbol)))
+	data, keys, err := t.getSchema(strings.TrimPrefix(line, string(LinkingSymbol)), token)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for key, value := range data {
 		schema[key] = value
 	}
 
-	return schema, nil
+	return schema, keys, nil
 }
 
 func (t *TypeTokenizer) parseHashing(token BuildToken) error {
@@ -321,12 +400,12 @@ func (t *TypeTokenizer) parseHashing(token BuildToken) error {
 		if strings.HasPrefix(line, string(Algorithm)) {
 			line = strings.TrimPrefix(line, string(Algorithm))
 		} else {
-			return NewErrorWithPosition("Invalid data", Token{
+			return NewErrorWithPosition("invalid data", Token{
 				Value:     line,
 				TokenType: token.Type,
 				Line:      token.Line + i,
 				FileName:  token.File,
-			})
+			}).SetType("hash algo error")
 		}
 
 		line = strings.TrimSpace(line)
@@ -338,7 +417,7 @@ func (t *TypeTokenizer) parseHashing(token BuildToken) error {
 				TokenType: token.Type,
 				Line:      token.Line + i + 1,
 				FileName:  token.File,
-			})
+			}).SetType("hash algo error")
 		}
 	}
 
@@ -368,6 +447,8 @@ func (t *TypeTokenizer) sortTokens() {
 			t.hashing = append(t.hashing, t.createToken(i, token))
 		case QueryType:
 			t.queries = append(t.queries, t.createToken(i, token))
+		case EnumType:
+			t.enums = append(t.enums, t.createToken(i, token))
 		}
 	}
 }
@@ -391,7 +472,7 @@ func (t *TypeTokenizer) createToken(inx int, token Token) BuildToken {
 func (t *TypeTokenizer) checkRelationArgs(relation string, args []string, token Token) error {
 	if slices.Contains([]string{"belongsTo"}, relation) {
 		if len(args) != 2 {
-			return NewErrorWithPosition(fmt.Sprintf("[%s] %v arguments passed, %v is required", relation, len(args), 2), token)
+			return NewErrorWithPosition(fmt.Sprintf("[%s] %v arguments passed, %v is required", relation, len(args), 2), token).SetType("relation error")
 		}
 	}
 	return nil

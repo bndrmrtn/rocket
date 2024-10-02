@@ -1,16 +1,20 @@
 package tokenizer
 
 type Generated struct {
-	Models  map[string]Model `json:"models"`
-	Hashing []Hashing        `json:"hashing"`
-	Queries []Query          `json:"queries"`
+	Enums     map[string]map[string]string `json:"enums"`
+	Models    map[string]Model             `json:"models"`
+	ModelKeys map[string][]string          `json:"model_keys,omitempty"`
+	Hashing   []Hashing                    `json:"hashing"`
+	Queries   []Query                      `json:"queries"`
 }
 
 func NewGenerated() *Generated {
 	return &Generated{
-		Models:  map[string]Model{},
-		Hashing: []Hashing{},
-		Queries: []Query{},
+		Models:    map[string]Model{},
+		Hashing:   []Hashing{},
+		Queries:   []Query{},
+		Enums:     make(map[string]map[string]string),
+		ModelKeys: make(map[string][]string),
 	}
 }
 

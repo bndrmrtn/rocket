@@ -1,24 +1,39 @@
-// comments currently only supported outside blocks
+// comment
+/*
+    multi line comments only supported outside of blocks {}
+*/
+
+settings {
+    table_casing default
+}
+
 hashing password {
     algo bcrypt(15)
+} // but it can be added here too, outside ;)
+
+enum Role {
+    ADMIN = "admin"
+    USER = "user"
 }
 
 schema global {
-    id number primary increment @default("hi")
-    created_at datetime @default(now())
+    id number primary increment
+    created_at datetime @default(now()) // hello
     updated_at datetime @default(now())
 }
 
 model User {
-    &global
-    username string @default("hi")
+    &global // xd
+    username string
     password string @sensitive @hash("password")
-    Images $hasMany(Image)
+    email_verified_at datetime nullable
+    role &Role @default(&Role.USER)
+    images $hasMany(Image)
 }
 
 model Image {
     &global
-    User $belongsTo(User, ID)
+    user $belongsTo(User, id) constraint @cascadeOnUpdate @onDelete("cascade")
 }
 
 query latestUser {
@@ -26,14 +41,5 @@ query latestUser {
 }
 
 query allUser {
-    get[] User
-}
-
-query getUserNameByID(_id number) {
-    get{User.username} User.where(ID == _id).limit(1)
-}
-
-query randomUser {
-    get User.random().
-        orderByDesc(ID)
+    []get User
 }

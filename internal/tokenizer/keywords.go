@@ -9,6 +9,7 @@ func keywords() map[string]TokenType {
 		"model":     ModelType,
 		"hashing":   HashingType,
 		"query":     QueryType,
+		"settings":  SettingsType,
 		"&":         LinkingSymbol,
 		"@":         AnnotationSymbol,
 		"//":        CommentSymbol,
@@ -21,6 +22,7 @@ func keywords() map[string]TokenType {
 		"datetime":  DataTypeDateTime,
 		"primary":   PrimaryKeyAttribute,
 		"increment": AutoIncrementAttribute,
+		"nullable":  NullableAttribute,
 		"sensitive": AnnotationSensitive,
 		"hash":      AnnotationHash,
 		"default":   AnnotationDefault,
@@ -30,9 +32,11 @@ func keywords() map[string]TokenType {
 
 func typeTokens() map[string]TokenType {
 	return map[string]TokenType{
-		"schema":  SchemaType,
-		"model":   ModelType,
-		"hashing": HashingType,
-		"query":   QueryType,
+		"schema":   SchemaType,
+		"enum":     EnumType,
+		"model":    ModelType,
+		"hashing":  HashingType,
+		"query":    QueryType,
+		"settings": SettingsType,
 	}
 }
