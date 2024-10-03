@@ -23,7 +23,7 @@ func explodeMultiOperations(input string) []string {
 }
 
 func tokenizeOperation(input string) []string {
-	pattern := `\w+|==|!=|>|>=|<|<=|in|not\s+in|\?\?|[0-9]+|\|\|`
+	pattern := `\w+|==|!=|>|>=|->|in|not\s+in|\?\?|[0-9]+|\|\|`
 	re := regexp.MustCompile(pattern)
 	tokens := re.FindAllString(input, -1)
 

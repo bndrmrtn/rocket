@@ -1,12 +1,14 @@
 package query_interpreter
 
 type Query struct {
+	Name        string
 	Fields      map[string][]string
 	MultiResult bool
 	From        string
 	Limit       int
 	Offset      int
 	Conditions  []ConditionBuilder
+	Order       OrderBy
 }
 
 // ConditionBuilder holds more ConditionTypes
@@ -37,6 +39,12 @@ type Condition struct {
 	Compare string
 	// CompareArg is a bool that is used to determine if the value is a func argument or not
 	CompareArg bool
+}
+
+type OrderBy struct {
+	Model string
+	Field string
+	Order string
 }
 
 func NewQuery() *Query {

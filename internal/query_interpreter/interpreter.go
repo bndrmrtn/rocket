@@ -27,6 +27,8 @@ func (i *Interpreter) InterpretAll() ([]Query, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		query.Name = tQuery.Name
 		queries = append(queries, *query)
 	}
 
@@ -106,7 +108,7 @@ func (i *Interpreter) makeFields(token string) map[string][]string {
 	for _, field := range rawFields {
 		rawFieldData := strings.SplitN(field, ".", 2)
 		if len(rawFieldData) == 1 {
-			fields["#fieldFrom#"] = append(fields["#fieldFrom#"], rawFieldData[0])
+			fields["#modelFrom#"] = append(fields["#modelFrom#"], rawFieldData[0])
 		} else {
 			fields[rawFieldData[0]] = append(fields[rawFieldData[0]], rawFieldData[1])
 		}
@@ -121,6 +123,14 @@ func (i *Interpreter) parseQueryMethod(methodName string, parantheses string, qu
 	switch methodName {
 	case "Where":
 		err = parseWhereFunc(parantheses, query)
+	case "Limit":
+		err = parseLimitFunc(parantheses, query)
+	case "Offset":
+		err = parseOffsetFunc(parantheses, query)
+	case "OrderBy":
+		err = parseOrderByFunc(parantheses, query)
+	default:
+		return fmt.Errorf("method \"%s\" does not exists", methodName)
 	}
 
 	return err

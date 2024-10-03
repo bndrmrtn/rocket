@@ -6,14 +6,21 @@ model Item {
     quantity number(4)
 }
 
+/*
+
+WHERE OPERATIONS CURRENTLY NOT SUPPORTED
+
+query complex(_names []string) {
+    []get{Item.id, Item.name} Item.Where((id == 5) || (name -> _names))
+}
+
 query selectAll {
     []get{Item.id, Item.name} Item.Where(id == 5 || id == 6)
 }
+*/
 
-query findByID(_id number) {
-    get Item.Where(id == _id)
-}
-
-query complex(_names []string) {
-    []get{Item.id, Item.name} Item.Where(id == 5 || name -> _names)
+// Parantheses cannot be added when no arguments!
+// Currently variables not supported
+query findByID {
+    []get{id} Item.Limit(5).OrderBy(desc Item.id)
 }

@@ -21,3 +21,7 @@ const (
 	NotIn        Operator = "not in"
 	Like         Operator = "??"
 )
+
+func Operators() []Operator {
+	return []Operator{Equal, NotEqual, Greater, GreaterEqual, Less, LessEqual, In, NotIn, Like}
+}
