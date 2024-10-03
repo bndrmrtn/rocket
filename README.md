@@ -17,7 +17,7 @@ Rocket (`rck`) is a command-line interface (CLI) for parsing files with a `.rock
 Use the following command to parse a Rocket file:
 
 ```bash
-rck generate --file="path/to/data.rocket" --language="go" --database="mysql"
+rocket generate --file="path/to/data.rocket" --language="go" --database="mysql"
 ```
 
 You can also include the `--output` flag to specify the output folder. The default output is `--output="*.{ext}"`.
