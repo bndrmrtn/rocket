@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bndrmrtn/rocket/internal/generator"
+	"github.com/bndrmrtn/rocket/internal/query_interpreter"
 	"github.com/bndrmrtn/rocket/internal/schemagen"
 	"github.com/bndrmrtn/rocket/internal/tokenizer"
 	"github.com/spf13/cobra"
@@ -72,7 +73,17 @@ var generateCmd = &cobra.Command{
 		_ = os.WriteFile("./out/data.yaml", d, os.ModePerm)
 
 		db.Bind(data)
-		db.Create(strings.ReplaceAll(out, "{ext}", "sql"))
+		err = db.Create(strings.ReplaceAll(out, "{ext}", "sql"))
+		if err != nil {
+			log.Fatal("Failed to generate SQL Code: ", err)
+		}
+		success("SQL Code generated from models successfully.")
+
+		interpreter := query_interpreter.NewInterpreter(data)
+		_, err = interpreter.InterpretAll()
+		if err != nil {
+			log.Fatal("Failed to interpret query tokens: ", err)
+		}
 	},
 }
 

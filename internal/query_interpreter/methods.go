@@ -1,23 +1,13 @@
 package query_interpreter
 
-type Method interface {
-	Is(tokens []string) bool
-	Build(*Query)
-	Args() [][2]string
-}
+import "fmt"
 
-type Where struct{}
+var MethodKeywords = []string{"Where", "OrderBy", "Limit", "Offset"}
 
-func (*Where) Is(tokens []string) bool {
-	return false
-}
-
-func (*Where) Token() string {
-	return "where"
-}
-
-func (*Where) Args() [][2]string {
-	return [][2]string{
-		{"condition", "core#CondBuilder"},
+func parseWhereFunc(parantheses string, query *Query) error {
+	data := explodeMultiOperations(parantheses)
+	for _, d := range data {
+		fmt.Println(tokenizeOperation(d))
 	}
+	return nil
 }

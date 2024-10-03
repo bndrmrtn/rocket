@@ -43,3 +43,7 @@ query latestUser {
 query allUser {
     []get User
 }
+
+query allUserID {
+    []get{User.ID} User
+}

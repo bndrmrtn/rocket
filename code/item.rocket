@@ -13,3 +13,7 @@ query selectAll {
 query findByID(_id number) {
     get Item.Where(id == _id)
 }
+
+query complex(_names []string) {
+    []get{Item.id, Item.name} Item.Where(id == 5 || name -> _names)
+}

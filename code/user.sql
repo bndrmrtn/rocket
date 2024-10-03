@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS `User` (
+	`id` INT(32) AUTO_INCREMENT NOT NULL,
+	PRIMARY KEY (`id`),
+	`created_at` DATETIME NOT NULL DEFAULT NOW(),
+	`updated_at` DATETIME NOT NULL DEFAULT NOW(),
+	`username` TEXT NOT NULL,
+	`password` TEXT NOT NULL,
+	`email_verified_at` DATETIME,
+	`role` ENUM('admin','user') NOT NULL DEFAULT 'user'
+);
+
+CREATE TABLE IF NOT EXISTS `Image` (
+	`id` INT(32) AUTO_INCREMENT NOT NULL,
+	PRIMARY KEY (`id`),
+	`created_at` DATETIME NOT NULL DEFAULT NOW(),
+	`updated_at` DATETIME NOT NULL DEFAULT NOW(),
+	`user_id` INT(32) NOT NULL,
+	CONSTRAINT `fk_ImageUser` FOREIGN KEY (`user_id`) REFERENCES `User`(`id`)
+	 ON DELETE CASCADE ON UPDATE CASCADE
+);
+
