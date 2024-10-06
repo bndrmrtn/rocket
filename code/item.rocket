@@ -22,5 +22,9 @@ query selectAll {
 // Parantheses cannot be added when no arguments!
 // Currently variables not supported
 query findByID {
-    []get{id} Item.Limit(5).OrderBy(desc Item.id)
+   []get{} Item.Limit(5).OrderBy(desc Item.id).Offset(2).OrderBy(asc Item.name)
+}
+
+query firstItem {
+    get Item.OrderBy(asc Item.id).Where(name in "%hamburger%")
 }

@@ -20,6 +20,7 @@ const (
 	In           Operator = "in"
 	NotIn        Operator = "not in"
 	Like         Operator = "??"
+	NotLike      Operator = "!?"
 )
 
 func Operators() []Operator {

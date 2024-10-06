@@ -37,3 +37,11 @@ func tokenizeOperation(input string) []string {
 
 	return result
 }
+
+func keys[K string | int, V any, M map[K]V](m M) []K {
+	var keys []K
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}

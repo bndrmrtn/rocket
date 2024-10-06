@@ -8,7 +8,7 @@ type Query struct {
 	Limit       int
 	Offset      int
 	Conditions  []ConditionBuilder
-	Order       OrderBy
+	Order       []OrderBy
 }
 
 // ConditionBuilder holds more ConditionTypes

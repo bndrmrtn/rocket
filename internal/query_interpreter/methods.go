@@ -50,9 +50,9 @@ func parseOrderByFunc(parantheses string, query *Query) error {
 	modelField := data[1]
 	mData := strings.SplitN(modelField, " . ", 2)
 	if len(mData) == 2 {
-		query.Order = OrderBy{Model: mData[0], Field: mData[1], Order: data[0]}
+		query.Order = append(query.Order, OrderBy{Model: mData[0], Field: mData[1], Order: data[0]})
 	} else {
-		query.Order = OrderBy{Model: "#modelFrom#", Field: mData[0], Order: data[0]}
+		query.Order = append(query.Order, OrderBy{Model: "#modelFrom#", Field: mData[0], Order: data[0]})
 	}
 
 	return nil
@@ -67,8 +67,18 @@ func parseWhereFunc(parantheses string, _ *Query) error {
 		if slices.Contains(Operators(), Operator(d)) {
 			cond = append(cond, ConditionType{Type: "operator", Operator: d})
 			continue
+		} else {
+			err := parseWhereCondition(d, &cond)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
+	return nil
+}
+
+func parseWhereCondition(d string, _ *ConditionBuilder) error {
+	_ = tokenizeOperation(d)
 	return nil
 }

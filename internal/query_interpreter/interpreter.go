@@ -48,34 +48,50 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 
 	tokens := tQuery.Tokens
 
-	var query Query
+	var (
+		query              Query
+		nextShouldBeMethod bool
+		hasFields          bool
+	)
 
 	for inx, token := range tokens {
+		// SKIP dot and next token should be a method
+		if token == "." {
+			if nextShouldBeMethod {
+				return nil, errors.New("invalid token: " + token)
+			}
+			nextShouldBeMethod = true
+			continue
+		} else {
+			nextShouldBeMethod = false
+		}
+
 		if inx == 0 && token == string(MultiResult) {
 			query.MultiResult = true
 			continue
 		}
 
-		if inx == 0 && query.MultiResult == false &&
+		if inx == 0 && !query.MultiResult &&
 			slices.Contains(QueryTypeKeywords, token) ||
 			inx == 1 && slices.Contains(QueryTypeKeywords, token) {
 			continue
-		} else if inx == 0 && query.MultiResult == false || inx == 1 && query.MultiResult == true {
+		} else if inx == 0 && !query.MultiResult || inx == 1 && query.MultiResult {
 			return nil, errors.New("invalid token: " + token)
 		}
 
-		if inx == 1 && query.MultiResult == false ||
-			inx == 2 && query.MultiResult == true {
+		if (inx == 1 && !query.MultiResult ||
+			inx == 2 && query.MultiResult) && strings.HasPrefix(token, "{") && strings.HasSuffix(token, "}") {
+			hasFields = true
 			query.Fields = i.makeFields(token)
 			continue
 		}
 
-		if inx == 2 && query.MultiResult == false || inx == 3 && query.MultiResult == true {
+		if inx == 1 && !hasFields && !query.MultiResult || inx == 2 && !query.MultiResult || inx == 3 && query.MultiResult {
 			query.From = token
 			continue
 		}
 
-		if inx > 2 && query.MultiResult == false || inx > 3 && query.MultiResult == true {
+		if inx > 1 && !query.MultiResult && !hasFields || inx > 2 && !query.MultiResult || inx > 3 && query.MultiResult {
 			if slices.Contains(MethodKeywords, token) {
 				var parantheses string
 				if len(tokens) > inx+1 &&
@@ -89,11 +105,6 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 				}
 			}
 		}
-
-		if token == "." {
-			continue
-		}
-
 	}
 
 	return &query, nil
@@ -107,9 +118,9 @@ func (i *Interpreter) makeFields(token string) map[string][]string {
 
 	for _, field := range rawFields {
 		rawFieldData := strings.SplitN(field, ".", 2)
-		if len(rawFieldData) == 1 {
+		if len(rawFieldData) == 1 && rawFieldData[0] != "" {
 			fields["#modelFrom#"] = append(fields["#modelFrom#"], rawFieldData[0])
-		} else {
+		} else if rawFieldData[0] != "" && rawFieldData[1] != "" {
 			fields[rawFieldData[0]] = append(fields[rawFieldData[0]], rawFieldData[1])
 		}
 	}
