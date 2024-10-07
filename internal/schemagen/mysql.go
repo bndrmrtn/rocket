@@ -13,13 +13,17 @@ import (
 )
 
 type mysql struct {
-	data         *tokenizer.Generated
-	out          string
-	helperTables string
+	data *tokenizer.Generated
+	out  string
+	// helperTables string
 }
 
 func (m *mysql) Bind(data *tokenizer.Generated) {
 	m.data = data
+}
+
+func (m *mysql) Get() string {
+	return m.out[:len(m.out)-len("\n")]
 }
 
 func (m *mysql) Create(out string) error {
@@ -205,7 +209,6 @@ func (m *mysql) getRelationQuery(model string, field string, config tokenizer.Mo
 				} else if ann.Annotation == "onUpdate" {
 					onUpdate = strings.Trim(ann.Arguments[0], "\"")
 				}
-				break
 			}
 		}
 	}

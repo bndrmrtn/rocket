@@ -1,16 +1,22 @@
 package cmd
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bndrmrtn/rocket/internal/generator"
 	"github.com/bndrmrtn/rocket/internal/query_interpreter"
 	"github.com/bndrmrtn/rocket/internal/schemagen"
 	"github.com/bndrmrtn/rocket/internal/tokenizer"
+	"github.com/bndrmrtn/rocket/utils"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -21,6 +27,10 @@ var generateCmd = &cobra.Command{
 	Aliases: []string{"g", "gen"},
 	Short:   "Generate code from a Rocket file.",
 	Run: func(cmd *cobra.Command, args []string) {
+		start := time.Now()
+		defer func(start time.Time) {
+			fmt.Printf("Generated in %s\n", time.Since(start))
+		}(start)
 		fmt.Println("🚀 Rocket - Generate Code")
 
 		file := cmd.Flag("file").Value.String()
@@ -51,17 +61,17 @@ var generateCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		t, err := tokenizer.New(file)
+		tokens, hash, err := getTokens(file)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Failed to get tokens from file: %v", err)
 		}
 
-		err = t.Tokenize()
-		if err != nil {
-			log.Fatal(err)
+		if len(tokens) == 0 {
+			fmt.Println("No tokens. Nothing to do.")
+			os.Exit(0)
 		}
 
-		tokens := t.GetTokens()
+		fmt.Println("Tokens Hash (sha256): " + hash)
 
 		typeT := tokenizer.NewType(tokens)
 
@@ -95,6 +105,8 @@ var generateCmd = &cobra.Command{
 
 		d, _ = yaml.Marshal(queries)
 		_ = os.WriteFile("./out/queries.yaml", d, os.ModePerm)
+
+		success("Queries interpreted successfully.")
 	},
 }
 
@@ -106,5 +118,50 @@ func init() {
 	generateCmd.Flags().StringP("output", "o", "*.{ext}", "Output file for generated code.")
 	generateCmd.Flags().BoolP("no-color", "c", false, "Disable colors.")
 
-	generateCmd.MarkFlagRequired("file")
+	_ = generateCmd.MarkFlagRequired("file")
+}
+
+// Helpers
+
+func getTokens(file string) ([]tokenizer.Token, string, error) {
+	var (
+		files  []string
+		tokens []tokenizer.Token
+	)
+
+	st, err := os.Stat(file)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if st.IsDir() {
+		files, err = utils.WalkDir(file, "rocket")
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		files = []string{file}
+	}
+
+	for _, file := range files {
+		t, err := tokenizer.New(file)
+		if err != nil {
+			return nil, "", err
+		}
+
+		err = t.Tokenize()
+		if err != nil {
+			return nil, "", err
+		}
+
+		tokens = append(tokens, t.GetTokens()...)
+	}
+
+	var b bytes.Buffer
+	_ = gob.NewEncoder(&b).Encode(tokens)
+
+	h := sha256.New()
+	_, err = h.Write(b.Bytes())
+
+	return tokens, base64.URLEncoding.EncodeToString(h.Sum(nil)), nil
 }

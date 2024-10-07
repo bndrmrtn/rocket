@@ -59,6 +59,10 @@ func parseFunctionArgs(args string) (map[string]string, error) {
 			continue
 		}
 
+		if char == ')' {
+			break
+		}
+
 		if unicode.IsLetter(char) || char == '_' {
 			var buf string
 			for pos < len(args) {
@@ -88,9 +92,7 @@ func parseFunctionArgs(args string) (map[string]string, error) {
 }
 
 func isTypeOK(t string) bool {
-	if strings.HasPrefix(t, "[]") {
-		t = strings.TrimPrefix(t, "[]")
-	}
+	t = strings.TrimPrefix(t, "[]")
 
 	return slices.Contains([]string{"number", "string", "byte", "bool"}, t)
 }

@@ -179,7 +179,6 @@ func (t *TypeTokenizer) parseModelConfig(s string, line int, file string) (Model
 		char := rune(s[pos])
 
 		if unicode.IsSpace(char) {
-			pos++
 			break
 		}
 

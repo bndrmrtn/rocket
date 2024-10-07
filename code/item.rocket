@@ -1,5 +1,4 @@
 // Item: Demo query
-
 model Item {
     id number primary increment
     name string @map("item_name")
@@ -22,9 +21,13 @@ query selectAll {
 // Parantheses cannot be added when no arguments!
 // Currently variables not supported
 query findByID {
-   []get{} Item.Limit(5).OrderBy(desc Item.id).Offset(2).OrderBy(asc Item.name)
+   []get{} Item.Limit(5).OrderByRand().OrderBy(desc Item.id).Offset(2).OrderBy(asc Item.name)
 }
 
 query firstItem {
     get Item.OrderBy(asc Item.id).Where(name in "%hamburger%")
+}
+
+query randomId {
+    get Item.OrderByRand().Limit(1)
 }

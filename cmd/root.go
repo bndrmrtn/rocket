@@ -1,12 +1,19 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"log"
+
+	"github.com/spf13/cobra"
+)
 
 var rootCmd = &cobra.Command{
-	Use:   "rck",
+	Use:   "rocket",
 	Short: "Rocket 🚀 An easier way to write queries.",
 }
 
 func Execute() {
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

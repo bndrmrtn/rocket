@@ -33,6 +33,7 @@ func (q *QueryTokenizer) Generate() error {
 			Name:      name,
 			Arguments: q.makeArgs(args),
 			Tokens:    q.tokenizeData(token.Value),
+			BT:        token,
 		})
 	}
 	return nil

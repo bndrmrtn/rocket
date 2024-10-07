@@ -1,0 +1,10 @@
+
+model User {
+    &Base
+    Username string @map("username")
+    Email string @hide @map("email")
+}
+
+query allUser() {
+    []get{} User
+}

@@ -1,7 +1,6 @@
 package query_interpreter
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -43,7 +42,7 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 		}
 	}
 	if tQuery.Name == "" {
-		return nil, fmt.Errorf("query %s not found", name)
+		return nil, tokenizer.NewErrorWithPosition(fmt.Sprintf("query %s not found", name), tQuery.BT.ToToken())
 	}
 
 	tokens := tQuery.Tokens
@@ -58,7 +57,7 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 		// SKIP dot and next token should be a method
 		if token == "." {
 			if nextShouldBeMethod {
-				return nil, errors.New("invalid token: " + token)
+				return nil, tokenizer.NewErrorWithPosition("invalid token: "+token, tQuery.BT.ToToken())
 			}
 			nextShouldBeMethod = true
 			continue
@@ -76,7 +75,7 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 			inx == 1 && slices.Contains(QueryTypeKeywords, token) {
 			continue
 		} else if inx == 0 && !query.MultiResult || inx == 1 && query.MultiResult {
-			return nil, errors.New("invalid token: " + token)
+			return nil, tokenizer.NewErrorWithPosition("invalid token: "+token, tQuery.BT.ToToken())
 		}
 
 		if (inx == 1 && !query.MultiResult ||
@@ -86,23 +85,25 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 			continue
 		}
 
-		if inx == 1 && !hasFields && !query.MultiResult || inx == 2 && !query.MultiResult || inx == 3 && query.MultiResult {
+		if inx == 1 && !hasFields && !query.MultiResult || inx == 2 && (!query.MultiResult || !hasFields) || inx == 3 && query.MultiResult {
 			query.From = token
 			continue
 		}
 
 		if inx > 1 && !query.MultiResult && !hasFields || inx > 2 && !query.MultiResult || inx > 3 && query.MultiResult {
-			if slices.Contains(MethodKeywords, token) {
-				var parantheses string
-				if len(tokens) > inx+1 &&
-					strings.HasPrefix(tokens[inx+1], "(") && strings.HasSuffix(tokens[inx+1], ")") {
-					parantheses = tokens[inx+1]
-				}
+			if strings.HasPrefix(tokens[inx], "(") && strings.HasSuffix(tokens[inx], ")") {
+				continue
+			}
 
-				err := i.parseQueryMethod(token, parantheses, &query)
-				if err != nil {
-					return nil, fmt.Errorf("error parsing method %s: %w", token, err)
-				}
+			var parantheses string
+			if len(tokens) > inx+1 &&
+				strings.HasPrefix(tokens[inx+1], "(") && strings.HasSuffix(tokens[inx+1], ")") {
+				parantheses = tokens[inx+1]
+			}
+
+			err := i.parseQueryMethod(token, parantheses, &query)
+			if err != nil {
+				return nil, tokenizer.NewErrorWithPosition(fmt.Sprintf("error parsing method \"%s\": %s", token, err.Error()), tQuery.BT.ToToken())
 			}
 		}
 	}
@@ -129,20 +130,18 @@ func (i *Interpreter) makeFields(token string) map[string][]string {
 }
 
 func (i *Interpreter) parseQueryMethod(methodName string, parantheses string, query *Query) error {
-	var err error
-
 	switch methodName {
 	case "Where":
-		err = parseWhereFunc(parantheses, query)
+		return parseWhereFunc(parantheses, query)
 	case "Limit":
-		err = parseLimitFunc(parantheses, query)
+		return parseLimitFunc(parantheses, query)
 	case "Offset":
-		err = parseOffsetFunc(parantheses, query)
+		return parseOffsetFunc(parantheses, query)
 	case "OrderBy":
-		err = parseOrderByFunc(parantheses, query)
+		return parseOrderByFunc(parantheses, query)
+	case "OrderByRand":
+		return parseOrderByRandFunc(parantheses, query)
 	default:
 		return fmt.Errorf("method \"%s\" does not exists", methodName)
 	}
-
-	return err
 }

@@ -9,6 +9,7 @@ import (
 
 type DB interface {
 	Bind(data *tokenizer.Generated)
+	Get() string
 	Create(out string) error
 }
 

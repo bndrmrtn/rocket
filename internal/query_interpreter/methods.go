@@ -1,13 +1,12 @@
 package query_interpreter
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 )
-
-var MethodKeywords = []string{"Where", "OrderBy", "Limit", "Offset"}
 
 func parseLimitFunc(parantheses string, query *Query) error {
 	parantheses = strings.Trim(parantheses, "()")
@@ -55,6 +54,16 @@ func parseOrderByFunc(parantheses string, query *Query) error {
 		query.Order = append(query.Order, OrderBy{Model: "#modelFrom#", Field: mData[0], Order: data[0]})
 	}
 
+	return nil
+}
+
+func parseOrderByRandFunc(parantheses string, query *Query) error {
+	data := strings.Trim(parantheses, "()")
+	data = strings.TrimSpace(data)
+	if data != "" {
+		return errors.New("parameter error: order by rand does not accept any parameters")
+	}
+	query.Order = append(query.Order, OrderBy{Order: "rand()"})
 	return nil
 }
 

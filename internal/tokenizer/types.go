@@ -53,4 +53,6 @@ type Query struct {
 	Arguments []QueryArg `json:"arguments,omitempty"`
 
 	Tokens []string `json:"tokens,omitempty"`
+
+	BT BuildToken `json:"build_token,omitempty"`
 }

@@ -37,7 +37,7 @@ model Image {
 }
 
 query latestUser {
-    get User.orderByDesc(User.created_at)
+    get User.OrderBy(desc User.created_at)
 }
 
 query allUser {
@@ -46,4 +46,12 @@ query allUser {
 
 query allUserID {
     []get{User.ID} User
+}
+
+settings "set:Queries global" {
+    OrderBy(desc @field.PrimaryKey)
+}
+
+query findByEmail(_email string) {
+    get User.Where(User.email == _email)
 }

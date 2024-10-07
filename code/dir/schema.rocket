@@ -1,0 +1,7 @@
+// DIRS ALSO CAN BE TOKENIZED TOGETHER
+// WHEN THE FILE FLAG IS SET TO A DIRECTORY
+// rocket generate --file="rocket_files_dir" --language="go" --database="mysql"
+
+schema Base {
+    id number primary increment @map("application_id")
+}
