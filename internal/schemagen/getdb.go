@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bndrmrtn/rocket/internal/query_interpreter"
 	"github.com/bndrmrtn/rocket/internal/tokenizer"
 )
 
@@ -11,6 +12,7 @@ type DB interface {
 	Bind(data *tokenizer.Generated)
 	Get() string
 	Create(out string) error
+	GetQueryParser() func(query_interpreter.Query) string
 }
 
 func GetDB(name string) (DB, error) {

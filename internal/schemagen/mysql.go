@@ -7,7 +7,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bndrmrtn/rocket/internal/query_interpreter"
 	"github.com/bndrmrtn/rocket/internal/tokenizer"
+	"github.com/bndrmrtn/rocket/utils"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -252,4 +254,59 @@ func (m *mysql) getRelationQuery(model string, field string, config tokenizer.Mo
 	}
 
 	return out + ",\n"
+}
+
+func (m *mysql) GetQueryParser() func(query_interpreter.Query) string {
+	return m.QueryParser
+}
+
+func (m *mysql) QueryParser(q query_interpreter.Query) string {
+	var (
+		query string
+	)
+
+	query += "SELECT "
+	if len(utils.Keys(q.Fields)) == 0 {
+		query += "*"
+	} else {
+		for model, fields := range q.Fields {
+			if model == "#modelFrom#" {
+				model = q.From
+			}
+			for _, field := range fields {
+				query += fmt.Sprintf("`%s`.`%s`, ", model, field)
+			}
+		}
+		query = strings.TrimSuffix(query, ", ")
+	}
+
+	query += " FROM " + q.From + " "
+
+	if len(q.Order) > 0 {
+		query += "ORDER BY "
+		for _, order := range q.Order {
+			m := order.Model
+			if m == "#modelFrom#" {
+				m = q.From
+			}
+
+			if m != "" && order.Field != "" {
+				query += fmt.Sprintf("`%s`.`%s` %s, ", m, order.Field, strings.ToUpper(order.Order))
+			} else {
+				query += fmt.Sprintf("%s %s, ", order.Field, strings.ToUpper(order.Order))
+			}
+		}
+
+		query = strings.TrimSuffix(query, ", ")
+	}
+
+	if q.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d ", q.Limit)
+	}
+
+	if q.Offset > 0 {
+		query += fmt.Sprintf(" OFFSET %d ", q.Offset)
+	}
+
+	return strings.TrimSpace(query)
 }

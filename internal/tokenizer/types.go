@@ -1,5 +1,7 @@
 package tokenizer
 
+import "errors"
+
 type Generated struct {
 	Enums     map[string]map[string]string `json:"enums"`
 	Models    map[string]Model             `json:"models"`
@@ -32,14 +34,26 @@ type ModelRelation struct {
 }
 
 type ModelConfig struct {
-	Type        string            `json:"type"`
-	Attributes  []string          `json:"attributes,omitempty"`
-	Annotations []ModelAnnotation `json:"annotations,omitempty"`
-	Relation    *ModelRelation    `json:"relation,omitempty"`
-	Ignore      bool              `json:"ignore"`
+	Type        string           `json:"type"`
+	Attributes  []string         `json:"attributes,omitempty"`
+	Annotations ModelAnnotations `json:"annotations,omitempty"`
+	Relation    *ModelRelation   `json:"relation,omitempty"`
+	Ignore      bool             `json:"ignore"`
 }
 
 type Model map[string]ModelConfig
+
+type ModelAnnotations []ModelAnnotation
+
+func (a ModelAnnotations) Get(name string) (string, error) {
+	for _, val := range a {
+		if val.Annotation == name {
+			return val.Arguments[0], nil
+		}
+	}
+
+	return "", errors.New("annotation does not exists")
+}
 
 // Query
 

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bndrmrtn/rocket/internal/codegen"
 	"github.com/bndrmrtn/rocket/internal/generator"
 	"github.com/bndrmrtn/rocket/internal/query_interpreter"
 	"github.com/bndrmrtn/rocket/internal/schemagen"
@@ -26,88 +27,7 @@ var generateCmd = &cobra.Command{
 	Use:     "generate",
 	Aliases: []string{"g", "gen"},
 	Short:   "Generate code from a Rocket file.",
-	Run: func(cmd *cobra.Command, args []string) {
-		start := time.Now()
-		defer func(start time.Time) {
-			fmt.Printf("Generated in %s\n", time.Since(start))
-		}(start)
-		fmt.Println("🚀 Rocket - Generate Code")
-
-		file := cmd.Flag("file").Value.String()
-		out := cmd.Flag("output").Value.String()
-		language := cmd.Flag("language").Value.String()
-		database := cmd.Flag("database").Value.String()
-		noColor := cmd.Flag("no-color").Value.String()
-		if noColor == "true" {
-			color.NoColor = true
-		}
-
-		if strings.Contains(out, "*") {
-			outPath := strings.TrimSuffix(file, filepath.Ext(file))
-			out = strings.ReplaceAll(out, "*", outPath)
-		}
-
-		_, err := generator.GetLanguage(language)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		/*if strings.Contains(out, "{ext}") {
-		out = strings.ReplaceAll(out, "{ext}", lang.Extension)
-		}*/
-
-		_, err = generator.GetDatabase(database)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		tokens, hash, err := getTokens(file)
-		if err != nil {
-			log.Fatalf("Failed to get tokens from file: %v", err)
-		}
-
-		if len(tokens) == 0 {
-			fmt.Println("No tokens. Nothing to do.")
-			os.Exit(0)
-		}
-
-		fmt.Println("Tokens Hash (sha256): " + hash)
-
-		typeT := tokenizer.NewType(tokens)
-
-		err = typeT.Generate()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		data := typeT.Output()
-
-		db, err := schemagen.GetDB(database)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		d, _ := yaml.Marshal(data)
-		_ = os.WriteFile("./out/data.yaml", d, os.ModePerm)
-
-		db.Bind(data)
-		err = db.Create(strings.ReplaceAll(out, "{ext}", "sql"))
-		if err != nil {
-			log.Fatal("Failed to generate SQL Code: ", err)
-		}
-		success("SQL Code generated from models successfully.")
-
-		interpreter := query_interpreter.NewInterpreter(data)
-		queries, err := interpreter.InterpretAll()
-		if err != nil {
-			log.Fatal("Failed to interpret query tokens: ", err)
-		}
-
-		d, _ = yaml.Marshal(queries)
-		_ = os.WriteFile("./out/queries.yaml", d, os.ModePerm)
-
-		success("Queries interpreted successfully.")
-	},
+	Run:     execGenerate,
 }
 
 func init() {
@@ -119,6 +39,97 @@ func init() {
 	generateCmd.Flags().BoolP("no-color", "c", false, "Disable colors.")
 
 	_ = generateCmd.MarkFlagRequired("file")
+}
+
+func execGenerate(cmd *cobra.Command, args []string) {
+	start := time.Now()
+	defer func(start time.Time) {
+		fmt.Printf("Generated in %s\n", time.Since(start))
+	}(start)
+	fmt.Println("🚀 Rocket - Generate Code")
+
+	file := cmd.Flag("file").Value.String()
+	out := cmd.Flag("output").Value.String()
+	language := cmd.Flag("language").Value.String()
+	database := cmd.Flag("database").Value.String()
+	noColor := cmd.Flag("no-color").Value.String()
+	if noColor == "true" {
+		color.NoColor = true
+	}
+
+	if strings.Contains(out, "*") {
+		outPath := strings.TrimSuffix(file, filepath.Ext(file))
+		out = strings.ReplaceAll(out, "*", outPath)
+	}
+
+	lang, err := generator.GetLanguage(language)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = generator.GetDatabase(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tokens, hash, err := getTokens(file)
+	if err != nil {
+		log.Fatalf("Failed to get tokens from file: %v", err)
+	}
+
+	if len(tokens) == 0 {
+		fmt.Println("No tokens. Nothing to do.")
+		os.Exit(0)
+	}
+
+	fmt.Println("Tokens Hash (sha256): " + hash)
+
+	typeT := tokenizer.NewType(tokens)
+
+	err = typeT.Generate()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := typeT.Output()
+
+	db, err := schemagen.GetDB(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	d, _ := yaml.Marshal(data)
+	_ = os.WriteFile("./out/data.yaml", d, os.ModePerm)
+
+	db.Bind(data)
+	err = db.Create(strings.ReplaceAll(out, "{ext}", "sql"))
+	if err != nil {
+		log.Fatal("Failed to generate SQL Code: ", err)
+	}
+	success("SQL Code generated from models successfully.")
+
+	interpreter := query_interpreter.NewInterpreter(data)
+	queries, err := interpreter.InterpretAll()
+	if err != nil {
+		log.Fatal("Failed to interpret query tokens: ", err)
+	}
+
+	d, _ = yaml.Marshal(queries)
+	_ = os.WriteFile("./out/queries.yaml", d, os.ModePerm)
+
+	success("Queries interpreted successfully.")
+
+	cg, err := codegen.GetLang(lang.Extension)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cg.Bind(data, queries)
+	err = cg.Generate(db.GetQueryParser())
+	if err != nil {
+		log.Fatal("Failed to generate output: ", err)
+	}
+	cg.Save(strings.ReplaceAll(out, "{ext}", lang.Extension))
 }
 
 // Helpers

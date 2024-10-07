@@ -81,7 +81,7 @@ hashing Password {
 
 ### Query Block
 
-The query block contains a Rocket Query **(currently no release)**.
+The query block contains a Rocket Query **(some methods are missing currently)**.
 
 Queries can be simple, such as retrieving all users. The `[]` indicates that the result should be an array containing multiple users. The `get` keyword signifies a selection from the database, and `User` specifies the model to query.
 
@@ -96,5 +96,39 @@ You can also create more specific queries, as shown below. The fields within `{}
 ```
 query findUserName(_id number) {
   get{User.first_name} User.Where(id == _id)
+}
+```
+
+### Query blocks are generated
+
+The query block generates a query method for the specified language.
+
+Here is an example model with simple queries:
+```
+model Item {
+  id number primary increment
+  name string
+  quantity number(4)
+}
+
+query getFiveItems() {
+  []get Item.Limit(5).OrderBy(desc Item.id).OrderBy(asc Item.name)
+}
+
+query getRandomItem() {
+  get Item.OrderByRand()
+}
+```
+
+And here is the generated code for the above model:
+```go
+func GetFiveItems() ([]Item, error) {
+	rawQuery := `SELECT * FROM Item ORDER BY `Item`.`id` DESC, `Item`.`name` ASC LIMIT 5`
+	return rocket.FindMany(rawQuery)
+}
+
+func GetRandomItem() (*Item, error) {
+	rawQuery := `SELECT * FROM Item ORDER BY RAND() LIMIT 1`
+	return rocket.FindOne(rawQuery)
 }
 ```
