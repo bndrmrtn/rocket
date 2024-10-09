@@ -53,7 +53,7 @@ func FindByID(db *sql.DB, _limitCount int) ([]Item, error) {
 }
 
 func FirstItem(db *sql.DB) (*Item, error) {
-	rawQuery := `SELECT * FROM Item ORDER BY Item.id ASC`
+	rawQuery := `SELECT * FROM Item ORDER BY Item.id ASC LIMIT 1`
 	return findOne[Item](db, rawQuery, []any{})
 }
 

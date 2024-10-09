@@ -112,6 +112,9 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 		query.FuncParams = append(query.FuncParams, FuncParam{Type: arg.Type, Name: arg.Name})
 	}
 
+	if !query.MultiResult {
+		query.Limit = "1"
+	}
 	return &query, nil
 }
 

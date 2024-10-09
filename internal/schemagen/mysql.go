@@ -303,7 +303,6 @@ func (m *mysql) QueryParser(q query_interpreter.Query) string {
 
 	if q.Limit != "" {
 		limit, err := strconv.Atoi(q.Limit)
-		fmt.Println(q.Limit, limit, err)
 		if err != nil {
 			query += fmt.Sprintf(" LIMIT $(%s) ", q.Limit)
 		} else if limit > 0 {
