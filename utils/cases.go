@@ -30,7 +30,7 @@ func PascalCase(input string) string {
 		}
 	}
 
-	return strings.ReplaceAll(result.String(), " ", "")
+	return strings.ReplaceAll(strings.ReplaceAll(result.String(), " ", ""), "Id", "ID")
 }
 
 func SnakeCase(input string) string {

@@ -5,10 +5,16 @@ type Query struct {
 	Fields      map[string][]string
 	MultiResult bool
 	From        string
-	Limit       int
-	Offset      int
+	Limit       string
+	Offset      string
 	Conditions  []ConditionBuilder
 	Order       []OrderBy
+	FuncParams  []FuncParam
+}
+
+type FuncParam struct {
+	Name string
+	Type string
 }
 
 // ConditionBuilder holds more ConditionTypes

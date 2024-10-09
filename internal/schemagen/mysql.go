@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/bndrmrtn/rocket/internal/query_interpreter"
@@ -274,7 +275,7 @@ func (m *mysql) QueryParser(q query_interpreter.Query) string {
 				model = q.From
 			}
 			for _, field := range fields {
-				query += fmt.Sprintf("`%s`.`%s`, ", model, field)
+				query += fmt.Sprintf("%s.%s, ", model, field)
 			}
 		}
 		query = strings.TrimSuffix(query, ", ")
@@ -291,7 +292,7 @@ func (m *mysql) QueryParser(q query_interpreter.Query) string {
 			}
 
 			if m != "" && order.Field != "" {
-				query += fmt.Sprintf("`%s`.`%s` %s, ", m, order.Field, strings.ToUpper(order.Order))
+				query += fmt.Sprintf("%s.%s %s, ", m, order.Field, strings.ToUpper(order.Order))
 			} else {
 				query += fmt.Sprintf("%s %s, ", order.Field, strings.ToUpper(order.Order))
 			}
@@ -300,12 +301,23 @@ func (m *mysql) QueryParser(q query_interpreter.Query) string {
 		query = strings.TrimSuffix(query, ", ")
 	}
 
-	if q.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d ", q.Limit)
+	if q.Limit != "" {
+		limit, err := strconv.Atoi(q.Limit)
+		fmt.Println(q.Limit, limit, err)
+		if err != nil {
+			query += fmt.Sprintf(" LIMIT $(%s) ", q.Limit)
+		} else if limit > 0 {
+			query += fmt.Sprintf(" LIMIT %d ", limit)
+		}
 	}
 
-	if q.Offset > 0 {
-		query += fmt.Sprintf(" OFFSET %d ", q.Offset)
+	if q.Offset != "" {
+		offset, err := strconv.Atoi(q.Offset)
+		if err != nil {
+			query += fmt.Sprintf(" OFFSET $(%s) ", q.Offset)
+		} else if offset > 0 {
+			query += fmt.Sprintf(" OFFSET %d ", offset)
+		}
 	}
 
 	return strings.TrimSpace(query)

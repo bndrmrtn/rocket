@@ -101,11 +101,15 @@ func (i *Interpreter) Interpret(name string) (*Query, error) {
 				parantheses = tokens[inx+1]
 			}
 
-			err := i.parseQueryMethod(token, parantheses, &query)
+			err := i.parseQueryMethod(token, tQuery.Arguments, parantheses, &query)
 			if err != nil {
 				return nil, tokenizer.NewErrorWithPosition(fmt.Sprintf("error parsing method \"%s\": %s", token, err.Error()), tQuery.BT.ToToken())
 			}
 		}
+	}
+
+	for _, arg := range tQuery.Arguments {
+		query.FuncParams = append(query.FuncParams, FuncParam{Type: arg.Type, Name: arg.Name})
 	}
 
 	return &query, nil
@@ -129,14 +133,14 @@ func (i *Interpreter) makeFields(token string) map[string][]string {
 	return fields
 }
 
-func (i *Interpreter) parseQueryMethod(methodName string, parantheses string, query *Query) error {
+func (i *Interpreter) parseQueryMethod(methodName string, args []tokenizer.QueryArg, parantheses string, query *Query) error {
 	switch methodName {
 	case "Where":
 		return parseWhereFunc(parantheses, query)
 	case "Limit":
-		return parseLimitFunc(parantheses, query)
+		return parseLimitFunc(parantheses, query, args)
 	case "Offset":
-		return parseOffsetFunc(parantheses, query)
+		return parseOffsetFunc(parantheses, query, args)
 	case "OrderBy":
 		return parseOrderByFunc(parantheses, query)
 	case "OrderByRand":

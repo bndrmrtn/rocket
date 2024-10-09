@@ -35,7 +35,7 @@ func init() {
 	generateCmd.Flags().StringP("file", "f", "", "Rocket file to generate code from.")
 	generateCmd.Flags().StringP("language", "l", "go", "Language to generate code in.")
 	generateCmd.Flags().StringP("database", "d", "mysql", "Database to generate code for.")
-	generateCmd.Flags().StringP("output", "o", "*.{ext}", "Output file for generated code.")
+	generateCmd.Flags().StringP("out", "o", "*_rgen.{ext}", "Output file for generated code.")
 	generateCmd.Flags().BoolP("no-color", "c", false, "Disable colors.")
 
 	_ = generateCmd.MarkFlagRequired("file")
@@ -49,7 +49,7 @@ func execGenerate(cmd *cobra.Command, args []string) {
 	fmt.Println("🚀 Rocket - Generate Code")
 
 	file := cmd.Flag("file").Value.String()
-	out := cmd.Flag("output").Value.String()
+	out := cmd.Flag("out").Value.String()
 	language := cmd.Flag("language").Value.String()
 	database := cmd.Flag("database").Value.String()
 	noColor := cmd.Flag("no-color").Value.String()

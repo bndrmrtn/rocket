@@ -6,29 +6,59 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/bndrmrtn/rocket/internal/tokenizer"
 )
 
-func parseLimitFunc(parantheses string, query *Query) error {
+func parseLimitFunc(parantheses string, query *Query, args []tokenizer.QueryArg) error {
 	parantheses = strings.Trim(parantheses, "()")
 	parantheses = strings.TrimSpace(parantheses)
-	num, err := strconv.Atoi(parantheses)
+	_, err := strconv.Atoi(parantheses)
 	if err != nil {
-		return fmt.Errorf("value error: limit is not a number: %w", err)
+		var ok bool
+		for _, arg := range args {
+			if arg.Name == parantheses {
+				if arg.Type == "number" {
+					query.Limit = arg.Name
+					ok = true
+				} else {
+					return fmt.Errorf("param error: limit is not number: %s, type: %s", arg.Name, arg.Type)
+				}
+			}
+		}
+
+		if !ok {
+			return fmt.Errorf("value error: limit is not a number: %w", err)
+		}
 	}
 
-	query.Limit = num
+	query.Limit = parantheses
 	return nil
 }
 
-func parseOffsetFunc(parantheses string, query *Query) error {
+func parseOffsetFunc(parantheses string, query *Query, args []tokenizer.QueryArg) error {
 	parantheses = strings.Trim(parantheses, "()")
 	parantheses = strings.TrimSpace(parantheses)
-	num, err := strconv.Atoi(parantheses)
+	_, err := strconv.Atoi(parantheses)
 	if err != nil {
-		return fmt.Errorf("value error: offset is not a number: %w", err)
+		var ok bool
+		for _, arg := range args {
+			if arg.Name == parantheses {
+				if arg.Type == "number" {
+					query.Limit = arg.Name
+					ok = true
+				} else {
+					return fmt.Errorf("param error: offset is not number: %s, type: %s", arg.Name, arg.Type)
+				}
+			}
+		}
+
+		if !ok {
+			return fmt.Errorf("value error: offset is not a number: %w", err)
+		}
 	}
 
-	query.Offset = num
+	query.Offset = parantheses
 	return nil
 }
 
