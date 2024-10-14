@@ -99,15 +99,19 @@ func parseOrderByRandFunc(parantheses string, query *Query) error {
 
 // TODO: implement this function
 func parseWhereFunc(parantheses string, _ *Query) error {
-	var cond ConditionBuilder
+	var (
+		cond ConditionBuilder
+		err  error
+	)
 
 	data := explodeMultiOperations(parantheses)
+
 	for _, d := range data {
-		if slices.Contains(Operators(), Operator(d)) {
-			cond = append(cond, ConditionType{Type: "operator", Operator: d})
+		if slices.Contains(Separators(), Separator(d)) {
+			cond = append(cond, ConditionType{Type: "separator-group", Operator: d})
 			continue
 		} else {
-			err := parseWhereCondition(d, &cond)
+			cond, err = parseWhereCondition(d, cond)
 			if err != nil {
 				return err
 			}
@@ -117,8 +121,21 @@ func parseWhereFunc(parantheses string, _ *Query) error {
 	return nil
 }
 
-func parseWhereCondition(d string, _ *ConditionBuilder) error {
+func parseWhereCondition(d string, cb ConditionBuilder) (ConditionBuilder, error) {
 	ops := tokenizeOperation(d)
-	fmt.Println("tokens", ops)
-	return nil
+
+	// conditionStarted := true
+	var i int
+	for i < len(ops) {
+		operator := ops[i]
+		i++
+
+		if slices.Contains(Separators(), Separator(operator)) {
+			cb = append(cb, ConditionType{Type: "separator", Operator: operator})
+			// conditionStarted = true
+			continue
+		}
+	}
+
+	return cb, nil
 }

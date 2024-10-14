@@ -44,9 +44,10 @@ func init() {
 func execGenerate(cmd *cobra.Command, args []string) {
 	start := time.Now()
 	defer func(start time.Time) {
-		fmt.Printf("Generated in %s\n", time.Since(start))
+		color.HiBlack("Generated in %s", time.Since(start))
 	}(start)
-	fmt.Println("🚀 Rocket - Generate Code")
+	name := color.New(color.FgBlue, color.Bold)
+	fmt.Println(name.Sprint("🚀 Rocket - Generate Code\n"))
 
 	file := cmd.Flag("file").Value.String()
 	out := cmd.Flag("out").Value.String()
@@ -82,7 +83,7 @@ func execGenerate(cmd *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
-	fmt.Println("Tokens Hash (sha256): " + hash)
+	color.HiBlack("Tokens Hash (sha256): " + hash)
 
 	typeT := tokenizer.NewType(tokens)
 

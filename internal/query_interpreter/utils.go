@@ -24,17 +24,11 @@ func explodeMultiOperations(input string) []string {
 
 // FIXIT: Bad regex
 func tokenizeOperation(input string) []string {
-	pattern := `\w+|==|!=|>|>=|->|in|not\s+in|\?\?|[0-9]+|\|\|`
-	re := regexp.MustCompile(pattern)
-	tokens := re.FindAllString(input, -1)
+	cleanedInput := regexp.MustCompile(`\s*\.\s*`).ReplaceAllString(input, ".")
+	cleanedInput = regexp.MustCompile(`\s*:\s*`).ReplaceAllString(cleanedInput, ":")
 
-	var result []string
-	for _, token := range tokens {
-		token = strings.TrimSpace(token)
-		if token != "" {
-			result = append(result, token)
-		}
-	}
+	re := regexp.MustCompile(`([a-zA-Z_][a-zA-Z0-9_.]*|==|!=|>=|<=|>|<|&&|\|\||:\w+|\d+|[^\s]+)`)
+	tokens := re.FindAllString(cleanedInput, -1)
 
-	return result
+	return tokens
 }

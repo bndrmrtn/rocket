@@ -34,5 +34,5 @@ query randomId {
 */
 
 query findItems(name string) {
-    []get Item.Where(Item.name == :name)
+    []get Item.Where((Item.name == :name) || (Item.slug like :name))
 }

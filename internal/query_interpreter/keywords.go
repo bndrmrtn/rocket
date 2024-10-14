@@ -26,3 +26,14 @@ const (
 func Operators() []Operator {
 	return []Operator{Equal, NotEqual, Greater, GreaterEqual, Less, LessEqual, In, NotIn, Like}
 }
+
+type Separator string
+
+const (
+	Or  Separator = "||"
+	And Separator = "&&"
+)
+
+func Separators() []Separator {
+	return []Separator{Or, And}
+}
