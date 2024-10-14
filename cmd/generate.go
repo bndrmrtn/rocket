@@ -3,8 +3,8 @@ package cmd
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"os"
@@ -35,7 +35,7 @@ func init() {
 	generateCmd.Flags().StringP("file", "f", "", "Rocket file to generate code from.")
 	generateCmd.Flags().StringP("language", "l", "go", "Language to generate code in.")
 	generateCmd.Flags().StringP("database", "d", "mysql", "Database to generate code for.")
-	generateCmd.Flags().StringP("out", "o", "*_rgen.{ext}", "Output file for generated code.")
+	generateCmd.Flags().StringP("out", "o", "{filename}_rgen.{ext}", "Output file for generated code.")
 	generateCmd.Flags().BoolP("no-color", "c", false, "Disable colors.")
 
 	_ = generateCmd.MarkFlagRequired("file")
@@ -57,9 +57,9 @@ func execGenerate(cmd *cobra.Command, args []string) {
 		color.NoColor = true
 	}
 
-	if strings.Contains(out, "*") {
+	if strings.Contains(out, "{filename}") {
 		outPath := strings.TrimSuffix(file, filepath.Ext(file))
-		out = strings.ReplaceAll(out, "*", outPath)
+		out = strings.ReplaceAll(out, "{filename}", outPath)
 	}
 
 	lang, err := generator.GetLanguage(language)
@@ -98,24 +98,21 @@ func execGenerate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	d, _ := yaml.Marshal(data)
-	_ = os.WriteFile("./out/data.yaml", d, os.ModePerm)
-
 	db.Bind(data)
-	err = db.Create(strings.ReplaceAll(out, "{ext}", "sql"))
+	sqlDump, err := db.Get()
 	if err != nil {
 		log.Fatal("Failed to generate SQL Code: ", err)
 	}
 	success("SQL Code generated from models successfully.")
+
+	b, _ := yaml.Marshal(data)
+	os.WriteFile("./out/queries.yaml", b, os.ModePerm)
 
 	interpreter := query_interpreter.NewInterpreter(data)
 	queries, err := interpreter.InterpretAll()
 	if err != nil {
 		log.Fatal("Failed to interpret query tokens: ", err)
 	}
-
-	d, _ = yaml.Marshal(queries)
-	_ = os.WriteFile("./out/queries.yaml", d, os.ModePerm)
 
 	success("Queries interpreted successfully.")
 
@@ -124,7 +121,7 @@ func execGenerate(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	cg.Bind(data, queries)
+	cg.Bind(sqlDump, data, queries)
 	err = cg.Generate(db.GetQueryParser())
 	if err != nil {
 		log.Fatal("Failed to generate output: ", err)
@@ -174,5 +171,5 @@ func getTokens(file string) ([]tokenizer.Token, string, error) {
 	h := sha256.New()
 	_, err = h.Write(b.Bytes())
 
-	return tokens, base64.URLEncoding.EncodeToString(h.Sum(nil)), nil
+	return tokens, hex.EncodeToString(h.Sum(nil)), nil
 }

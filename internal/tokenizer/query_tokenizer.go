@@ -41,7 +41,8 @@ func (q *QueryTokenizer) Generate() error {
 
 func (q *QueryTokenizer) tokenizeData(input string) []string {
 	// pattern := `\[\]|\{[^}]+\}|\(|\)|\w+|==|\|\||[=().{}]|\s+|,|[0-9]+`
-	pattern := `\[\w*(?:\.\w*)*\]|\{[^}]*\}|\(|\)|\w+|.|==|!=|>|>=|->|in|not\s+in|\?\?|[0-9]+|\|\|`
+	pattern := `\"[^\"]*\"|\[\w*(?:\.\w*)*\]|\{[^}]*\}|\((?:\w+(?:\.\w+)*)+\)|\(|\)|==|!=|>=|<=|>|<|->|in|not\s+in|\?\?|!\?|[a-zA-Z_][a-zA-Z0-9_]*|\|\||&&|\S`
+
 	re := regexp.MustCompile(pattern)
 	tokens := re.FindAllString(input, -1)
 

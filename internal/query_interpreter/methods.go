@@ -118,6 +118,7 @@ func parseWhereFunc(parantheses string, _ *Query) error {
 }
 
 func parseWhereCondition(d string, _ *ConditionBuilder) error {
-	_ = tokenizeOperation(d)
+	ops := tokenizeOperation(d)
+	fmt.Println("tokens", ops)
 	return nil
 }

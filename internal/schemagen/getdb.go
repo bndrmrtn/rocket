@@ -10,7 +10,7 @@ import (
 
 type DB interface {
 	Bind(data *tokenizer.Generated)
-	Get() string
+	Get() (string, error)
 	Create(out string) error
 	GetQueryParser() func(query_interpreter.Query) string
 }

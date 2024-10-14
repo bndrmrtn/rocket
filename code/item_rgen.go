@@ -5,7 +5,18 @@ package dist
 
 import (
 	"database/sql"
+
+	"encoding/base64"
 )
+
+func CreateDBTables(db *sql.DB) error {
+	b, err := base64.StdEncoding.DecodeString(`Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgYEl0ZW1gICgKCWBpZGAgSU5UKDMyKSBBVVRPX0lOQ1JFTUVOVCBOT1QgTlVMTCwKCVBSSU1BUlkgS0VZIChgaWRgKSwKCWBuYW1lYCBURVhUIE5PVCBOVUxMLAoJYHNsdWdgIFRFWFQgTk9UIE5VTEwsCglgcXVhbnRpdHlgIElOVCg0KSBOT1QgTlVMTAopOwo=`)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(string(b))
+	return err
+}
 
 func findOne[M any](db *sql.DB, query string, params []any) (*M, error) {
 	var model M
@@ -41,24 +52,16 @@ func findMany[M any](db *sql.DB, query string, params []any) ([]M, error) {
 
 	return models, nil
 }
+
 type Item struct {
-	ID string `json:"id"`
+	ID int `json:"id"`
 	Name string `json:"name"`
-	Quantity string `json:"quantity"`
+	Slug string `json:"slug"`
+	Quantity int `json:"quantity"`
 }
 
-func FindByID(db *sql.DB, _limitCount int) ([]Item, error) {
-	rawQuery := `SELECT * FROM Item ORDER BY  RAND(), Item.id DESC, Item.name ASC LIMIT ?  OFFSET 2`
-	return findMany[Item](db, rawQuery, []any{_limitCount})
-}
-
-func FirstItem(db *sql.DB) (*Item, error) {
-	rawQuery := `SELECT * FROM Item ORDER BY Item.id ASC LIMIT 1`
-	return findOne[Item](db, rawQuery, []any{})
-}
-
-func RandomID(db *sql.DB) (*Item, error) {
-	rawQuery := `SELECT * FROM Item ORDER BY  RAND() LIMIT 1`
-	return findOne[Item](db, rawQuery, []any{})
+func FindItems(db *sql.DB, name string) ([]Item, error) {
+	rawQuery := `SELECT * FROM Item`
+	return findMany[Item](db, rawQuery, []any{})
 }
 

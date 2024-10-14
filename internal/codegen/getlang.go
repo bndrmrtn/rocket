@@ -8,8 +8,8 @@ import (
 )
 
 type Lang interface {
-	Bind(data *tokenizer.Generated, queries []query_interpreter.Query)
-	Generate(func(query_interpreter.Query) string) error
+	Bind(sql string, data *tokenizer.Generated, queries []query_interpreter.Query)
+	Generate(interpreter func(query_interpreter.Query) string) error
 	Get() string
 	Save(file string) error
 }

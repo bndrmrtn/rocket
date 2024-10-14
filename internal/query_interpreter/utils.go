@@ -22,6 +22,7 @@ func explodeMultiOperations(input string) []string {
 	return result
 }
 
+// FIXIT: Bad regex
 func tokenizeOperation(input string) []string {
 	pattern := `\w+|==|!=|>|>=|->|in|not\s+in|\?\?|[0-9]+|\|\|`
 	re := regexp.MustCompile(pattern)

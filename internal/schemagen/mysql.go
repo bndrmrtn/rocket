@@ -25,8 +25,14 @@ func (m *mysql) Bind(data *tokenizer.Generated) {
 	m.data = data
 }
 
-func (m *mysql) Get() string {
-	return m.out[:len(m.out)-len("\n")]
+func (m *mysql) Get() (string, error) {
+	for name, model := range m.data.Models {
+		err := m.createTable(name, model, m.data.ModelKeys[name])
+		if err != nil {
+			return "", err
+		}
+	}
+	return m.out[:len(m.out)-len("\n")], nil
 }
 
 func (m *mysql) Create(out string) error {

@@ -2,6 +2,7 @@
 model Item {
     id number primary increment
     name string @map("item_name")
+    slug string @map("item_slug")
     quantity number(4)
 }
 
@@ -16,7 +17,6 @@ query complex(_names []string) {
 query selectAll {
     []get{Item.id, Item.name} Item.Where(id == 5 || id == 6)
 }
-*/
 
 // Parantheses cannot be added when no arguments!
 // Currently variables not supported
@@ -30,4 +30,9 @@ query firstItem {
 
 query randomId {
     get Item.OrderByRand().Limit(1)
+}
+*/
+
+query findItems(name string) {
+    []get Item.Where(Item.name == :name)
 }
